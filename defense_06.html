@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Pig Defense</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #1a1c23;
+      color: #e2e8f0;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    header {
+      width: 100%;
+      background-color: #0f1115;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 4px solid #2d3748;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      color: #ecc94b;
+      text-shadow: 2px 2px #000;
+    }
+    .main-layout {
+      display: flex;
+      gap: 15px;
+      margin-top: 10px;
+      align-items: flex-start;
+    }
+    .side-hud {
+      width: 230px;
+      background: #2d3748;
+      border: 2px solid #4a5568;
+      border-radius: 8px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 540px;
+    }
+    .side-hud h3 {
+      margin: 0 0 5px 0;
+      font-size: 15px;
+      color: #f6e05e;
+      border-bottom: 2px solid #4a5568;
+      padding-bottom: 5px;
+    }
+    .hud-info {
+      font-size: 13px;
+      color: #cbd5e0;
+      line-height: 1.5;
+    }
+    .upgrade-btn {
+      background: #38a169;
+      color: white;
+      border: 2px solid #9ae6b4;
+      padding: 8px;
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-top: 10px;
+      transition: background 0.1s;
+      width: 100%;
+    }
+    .upgrade-btn:hover:not(:disabled) {
+      background: #2f855a;
+    }
+    .upgrade-btn:disabled {
+      background: #4a5568;
+      border-color: #718096;
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .sell-btn {
+      background: #dd6b20;
+      color: white;
+      border: 2px solid #fbd38d;
+      padding: 8px;
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-top: 8px;
+      transition: background 0.1s;
+      width: 100%;
+    }
+    .sell-btn:hover {
+      background: #c05621;
+    }
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    #gameCanvas {
+      background-color: #2e8b57;
+      border: 4px solid #1a202c;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+      image-rendering: pixelated;
+      cursor: crosshair;
+    }
+    .controls-panel {
+      display: flex;
+      gap: 10px;
+      background: #2d3748;
+      padding: 10px 15px;
+      border-radius: 8px;
+      align-items: center;
+      width: 800px;
+      justify-content: space-between;
+      border: 2px solid #4a5568;
+    }
+    .stat-box {
+      font-size: 15px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .stat-gold { color: #f6e05e; }
+    .stat-lives { color: #fc8181; }
+    .stat-wave { color: #63b3ed; }
+
+    .btn-group {
+      display: flex;
+      gap: 5px;
+    }
+    .btn {
+      background: #4a5568;
+      color: white;
+      border: 2px solid #a0aec0;
+      padding: 6px 10px;
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.1s;
+      font-size: 12px;
+    }
+    .btn:hover {
+      background: #718096;
+    }
+    .btn.active {
+      background: #d69e2e;
+      border-color: #faf089;
+      color: #1a202c;
+    }
+
+    .auto-wave-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: bold;
+      color: #cbd5e0;
+    }
+    .pill-switch {
+      width: 50px;
+      height: 26px;
+      background: #1a202c;
+      border: 2px solid #718096;
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      padding: 2px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .pill-switch .pill-btn {
+      width: 20px;
+      height: 18px;
+      background: #4a5568;
+      border-radius: 9px;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .pill-switch.active {
+      background: #1c4532;
+      border-color: #48bb78;
+    }
+    .pill-switch.active .pill-btn {
+      transform: translateX(22px);
+      background: #48bb78;
+      box-shadow: 0 0 6px #48bb78;
+    }
+
+    .shop-panel {
+      display: flex;
+      gap: 10px;
+      background: #1a202c;
+      padding: 10px;
+      border-radius: 8px;
+      width: 800px;
+      border: 2px solid #2d3748;
+    }
+    .tower-card {
+      flex: 1;
+      background: #2d3748;
+      border: 2px solid #4a5568;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: transform 0.1s, border-color 0.1s;
+    }
+    .tower-card:hover {
+      transform: translateY(-2px);
+      border-color: #cbd5e0;
+    }
+    .tower-card.selected {
+      border-color: #48bb78;
+      background: #2f855a;
+    }
+    .tower-card.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .tower-title {
+      font-weight: bold;
+      font-size: 13px;
+    }
+    .tower-cost {
+      color: #f6e05e;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>PIXEL PIG DEFENSE 🐷</h1>
+    <div style="font-size: 12px; color: #a0aec0;">Defenda a fazenda e o reino demoníaco!</div>
+  </header>
+
+  <div class="main-layout">
+    <div class="side-hud">
+      <h3>⚡ Painel de Torre</h3>
+      <div id="hudDetails" class="hud-info">
+        Clique numa torre colocada no mapa para ver estatísticas, fazer upgrades ou vendê-la.
+      </div>
+      <div style="margin-top: auto;">
+        <button class="btn" id="btnClearSelection" style="width: 100%; background: #c53030; border-color: #feb2b2;">Mão Vazia / Cancelar</button>
+      </div>
+    </div>
+
+    <div class="game-container">
+      <div class="controls-panel">
+        <div class="stat-box stat-gold">🪙 <span id="goldVal">200</span></div>
+        <div class="stat-box stat-lives">❤️ <span id="livesVal">20</span></div>
+        <div class="stat-box stat-wave">🌊 Onda: <span id="waveVal">1</span></div>
+        
+        <div class="btn-group">
+          <button class="btn" id="btnPause">⏸️ Pausa</button>
+          <button class="btn active" id="btn1x">1x</button>
+          <button class="btn" id="btn2x">2x</button>
+          <button class="btn" id="btn4x">4x</button>
+        </div>
+
+        <div class="auto-wave-container">
+          <span>AUTO</span>
+          <div class="pill-switch" id="btnAutoWave" title="Iniciar Ondas Automaticamente">
+            <div class="pill-btn"></div>
+          </div>
+        </div>
+
+        <button class="btn" id="btnNextWave" style="background: #38a169; border-color: #9ae6b4;">Iniciar Onda ▶</button>
+      </div>
+
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+      <div class="shop-panel">
+        <div class="tower-card" data-type="basic">
+          <div class="tower-title">Torre Arco</div>
+          <div class="tower-cost">🪙 50</div>
+          <div style="font-size: 10px; color: #cbd5e0;">Tiro Rápido</div>
+        </div>
+        <div class="tower-card" data-type="ice">
+          <div class="tower-title">Torre Gelo</div>
+          <div class="tower-cost">🪙 75</div>
+          <div style="font-size: 10px; color: #cbd5e0;">Lentidão</div>
+        </div>
+        <div class="tower-card" data-type="tesla">
+          <div class="tower-title">Bobina Choque</div>
+          <div class="tower-cost">🪙 80</div>
+          <div style="font-size: 10px; color: #cbd5e0;">Choque Direto</div>
+        </div>
+        <div class="tower-card" data-type="cannon">
+          <div class="tower-title">Canhão</div>
+          <div class="tower-cost">🪙 150</div>
+          <div style="font-size: 10px; color: #cbd5e0;">Dano em Área</div>
+        </div>
+        <div class="tower-card" data-type="barrel">
+          <div class="tower-title">Lança Barril</div>
+          <div class="tower-cost">🪙 250</div>
+          <div style="font-size: 10px; color: #cbd5e0;">Rola na Terra</div>
+        </div>
+        <div class="tower-card" data-type="heal" id="healTowerCard">
+          <div class="tower-title">Santuário Cura</div>
+          <div class="tower-cost">🪙 300</div>
+          <div style="font-size: 10px; color: #cbd5e0;">Cura (Máx: 2)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    let gold = 200;
+    let lives = 20;
+    let wave = 1;
+    let gameSpeed = 1;
+    let isPaused = false;
+    let autoWaveEnabled = false;
+    let selectedTowerType = null;
+    let selectedPlacedTower = null;
+    let waveInProgress = false;
+    let demoniacoWorldActivated = false;
+
+    const goldEl = document.getElementById('goldVal');
+    const livesEl = document.getElementById('livesVal');
+    const waveEl = document.getElementById('waveVal');
+    const btnPause = document.getElementById('btnPause');
+    const btn1x = document.getElementById('btn1x');
+    const btn2x = document.getElementById('btn2x');
+    const btn4x = document.getElementById('btn4x');
+    const btnNextWave = document.getElementById('btnNextWave');
+    const btnAutoWave = document.getElementById('btnAutoWave');
+    const hudDetails = document.getElementById('hudDetails');
+    const btnClearSelection = document.getElementById('btnClearSelection');
+
+    const TOWER_TYPES = {
+      basic: { name: 'Arco', cost: 50, range: 110, rate: 0.5, damage: 15, color: '#e53e3e' },
+      ice: { name: 'Gelo', cost: 75, range: 100, rate: 0.8, damage: 5, slow: 0.5, color: '#3182ce' },
+      tesla: { name: 'Choque', cost: 80, range: 120, rate: 1.0, damage: 25, color: '#d69e2e' },
+      cannon: { name: 'Canhão', cost: 150, range: 140, rate: 1.3, damage: 50, splash: 55, color: '#dd6b20' },
+      barrel: { name: 'Lança Barril', cost: 250, range: 160, rate: 2.5, damage: 30, pushback: 50, color: '#8b5a2b' },
+      heal: { name: 'Santuário Cura', cost: 300, range: 80, rate: 0, damage: 0, healAmount: 2, color: '#38a169', maxAllowed: 2 }
+    };
+
+    const waypointsNormal = [
+      { x: -30, y: 120 }, { x: 220, y: 120 }, { x: 220, y: 380 },
+      { x: 480, y: 380 }, { x: 480, y: 200 }, { x: 680, y: 200 },
+      { x: 680, y: 500 }, { x: 830, y: 500 }
+    ];
+
+    const waypointsDemoniaco = [
+      { x: 400, y: -30 }, { x: 400, y: 150 }, { x: 150, y: 150 },
+      { x: 150, y: 450 }, { x: 650, y: 450 }, { x: 650, y: 250 },
+      { x: 300, y: 250 }, { x: 300, y: 630 }
+    ];
+
+    function getCurrentWaypoints() {
+      return wave >= 10 ? waypointsDemoniaco : waypointsNormal;
+    }
+
+    // ELEMENTOS DE DECORAÇÃO FIXOS
+    const farmDecorations = [];
+    const demonDecorations = [];
+
+    // Gerar Flores e Arbustos da Fazenda
+    for (let i = 0; i < 45; i++) {
+      farmDecorations.push({
+        x: Math.random() * 800,
+        y: Math.random() * 600,
+        type: i % 4 === 0 ? 'bush' : 'flower',
+        color: ['#f6e05e', '#fc8181', '#b794f4', '#63b3ed'][i % 4]
+      });
+    }
+
+    // Gerar Cristais e Fissuras Demoníacas
+    for (let i = 0; i < 40; i++) {
+      demonDecorations.push({
+        x: Math.random() * 800,
+        y: Math.random() * 600,
+        type: i % 3 === 0 ? 'crack' : 'crystal',
+        color: i % 2 === 0 ? '#ff4500' : '#e53e3e'
+      });
+    }
+
+    let towers = [];
+    let enemies = [];
+    let projectiles = [];
+    let rollingBarrels = [];
+    let particles = [];
+    let floatingTexts = [];
+    let mousePos = { x: -100, y: -100 };
+    let enemySpawnQueue = [];
+    let spawnTimer = 0;
+    let bossAlertTimer = 0;
+    let mapTransitionAlertTimer = 0;
+
+    function createPigSprite(color, scale = 1, crown = false, lavaGlow = false) {
+      const size = 28 * scale;
+      const c = document.createElement('canvas');
+      c.width = size;
+      c.height = size;
+      const cx = c.getContext('2d');
+      cx.imageSmoothingEnabled = false;
+      const p = scale;
+
+      cx.fillStyle = color;
+      cx.fillRect(3*p, 4*p, 5*p, 5*p);
+      cx.fillRect(18*p, 4*p, 5*p, 5*p);
+      cx.fillRect(3*p, 8*p, 20*p, 16*p);
+      cx.fillRect(5*p, 6*p, 16*p, 20*p);
+
+      if (lavaGlow) {
+        cx.fillStyle = '#ff4500';
+        cx.fillRect(6*p, 10*p, 4*p, 2*p);
+        cx.fillRect(18*p, 10*p, 4*p, 2*p);
+        cx.fillRect(10*p, 20*p, 8*p, 2*p);
+      }
+
+      cx.fillStyle = 'rgba(0,0,0,0.2)';
+      cx.fillRect(3*p, 22*p, 20*p, 2*p);
+
+      cx.fillStyle = '#fbb6ce';
+      cx.fillRect(9*p, 13*p, 8*p, 6*p);
+      cx.fillStyle = '#b83280';
+      cx.fillRect(11*p, 15*p, 1.5*p, 2*p);
+      cx.fillRect(14.5*p, 15*p, 1.5*p, 2*p);
+
+      cx.fillStyle = '#ffffff';
+      cx.fillRect(7*p, 10*p, 3*p, 3*p);
+      cx.fillRect(17*p, 10*p, 3*p, 3*p);
+      cx.fillStyle = '#000000';
+      cx.fillRect(8*p, 11*p, 1.5*p, 1.5*p);
+      cx.fillRect(18*p, 11*p, 1.5*p, 1.5*p);
+
+      if (crown) {
+        cx.fillStyle = '#ecc94b';
+        cx.fillRect(8*p, 0*p, 10*p, 5*p);
+        cx.fillRect(8*p, -2*p, 2*p, 3*p);
+        cx.fillRect(12*p, -3*p, 2*p, 4*p);
+        cx.fillRect(16*p, -2*p, 2*p, 3*p);
+        cx.fillStyle = '#e53e3e';
+        cx.fillRect(12*p, -1*p, 2*p, 2*p);
+      }
+      return c;
+    }
+
+    const pigSprites = {
+      normal: createPigSprite('#f687b3', 1),
+      fast: createPigSprite('#f6ad55', 0.85),
+      tank: createPigSprite('#9b2c2c', 1.3),
+      lava: createPigSprite('#2d1a12', 1.4, false, true),
+      boss: createPigSprite('#d53f8c', 1.8, true)
+    };
+
+    function createTowerSprites() {
+      const size = 40;
+      const tSprites = {};
+
+      let c1 = document.createElement('canvas'); c1.width = size; c1.height = size;
+      let x1 = c1.getContext('2d'); x1.imageSmoothingEnabled = false;
+      x1.fillStyle = '#718096'; x1.fillRect(6, 6, 28, 28);
+      x1.fillStyle = '#975a16'; x1.fillRect(13, 10, 6, 20);
+      x1.fillStyle = '#edf2f7'; x1.fillRect(16, 10, 2, 20);
+      x1.fillStyle = '#d69e2e'; x1.fillRect(10, 19, 16, 3);
+      tSprites.basic = c1;
+
+      let c2 = document.createElement('canvas'); c2.width = size; c2.height = size;
+      let x2 = c2.getContext('2d'); x2.imageSmoothingEnabled = false;
+      x2.fillStyle = '#2b6cb0'; x2.fillRect(6, 6, 28, 28);
+      x2.fillStyle = '#63b3ed'; x2.fillRect(14, 10, 12, 20);
+      x2.fillStyle = '#e2e8f0'; x2.fillRect(17, 13, 6, 14);
+      tSprites.ice = c2;
+
+      let c3 = document.createElement('canvas'); c3.width = size; c3.height = size;
+      let x3 = c3.getContext('2d'); x3.imageSmoothingEnabled = false;
+      x3.fillStyle = '#4a5568'; x3.fillRect(6, 6, 28, 28);
+      x3.fillStyle = '#d69e2e'; x3.fillRect(11, 10, 4, 20); x3.fillRect(25, 10, 4, 20);
+      x3.fillStyle = '#f6e05e'; x3.fillRect(16, 15, 8, 10);
+      tSprites.tesla = c3;
+
+      let c4 = document.createElement('canvas'); c4.width = size; c4.height = size;
+      let x4 = c4.getContext('2d'); x4.imageSmoothingEnabled = false;
+      x4.fillStyle = '#2d3748'; x4.fillRect(6, 6, 28, 28);
+      x4.fillStyle = '#1a202c'; x4.fillRect(10, 14, 20, 12);
+      x4.fillStyle = '#718096'; x4.fillRect(20, 16, 14, 8);
+      tSprites.cannon = c4;
+
+      let c5 = document.createElement('canvas'); c5.width = size; c5.height = size;
+      let x5 = c5.getContext('2d'); x5.imageSmoothingEnabled = false;
+      x5.fillStyle = '#5c3d21'; x5.fillRect(6, 6, 28, 28);
+      x5.fillStyle = '#8b5a2b'; x5.fillRect(10, 8, 20, 24);
+      x5.fillStyle = '#d69e2e';
+      x5.fillRect(10, 12, 20, 3);
+      x5.fillRect(10, 25, 20, 3);
+      x5.fillStyle = '#319795';
+      x5.fillRect(17, 16, 6, 8);
+      tSprites.barrel = c5;
+
+      let c6 = document.createElement('canvas'); c6.width = size; c6.height = size;
+      let x6 = c6.getContext('2d'); x6.imageSmoothingEnabled = false;
+      x6.fillStyle = '#276749'; x6.fillRect(6, 6, 28, 28);
+      x6.fillStyle = '#48bb78'; x6.fillRect(10, 10, 20, 20);
+      x6.fillStyle = '#ffffff';
+      x6.fillRect(17, 12, 6, 16);
+      x6.fillRect(12, 17, 16, 6);
+      tSprites.heal = c6;
+
+      return tSprites;
+    }
+
+    const towerSprites = createTowerSprites();
+
+    btnPause.addEventListener('click', () => { isPaused = !isPaused; updateSpeedUI(); });
+    btn1x.addEventListener('click', () => { gameSpeed = 1; isPaused = false; updateSpeedUI(); });
+    btn2x.addEventListener('click', () => { gameSpeed = 2; isPaused = false; updateSpeedUI(); });
+    btn4x.addEventListener('click', () => { gameSpeed = 4; isPaused = false; updateSpeedUI(); });
+
+    btnAutoWave.addEventListener('click', () => {
+      autoWaveEnabled = !autoWaveEnabled;
+      btnAutoWave.classList.toggle('active', autoWaveEnabled);
+      if (autoWaveEnabled && !waveInProgress) {
+        startWave();
+      }
+    });
+
+    function updateSpeedUI() {
+      btnPause.classList.toggle('active', isPaused);
+      btn1x.classList.toggle('active', !isPaused && gameSpeed === 1);
+      btn2x.classList.toggle('active', !isPaused && gameSpeed === 2);
+      btn4x.classList.toggle('active', !isPaused && gameSpeed === 4);
+    }
+
+    document.querySelectorAll('.tower-card').forEach(card => {
+      card.addEventListener('click', () => {
+        let type = card.dataset.type;
+        
+        if (type === 'heal') {
+          let currentHealTowers = towers.filter(t => t.type === 'heal').length;
+          if (currentHealTowers >= TOWER_TYPES.heal.maxAllowed) {
+            alert('Você só pode construir no máximo 2 Santuários de Cura!');
+            return;
+          }
+        }
+
+        document.querySelectorAll('.tower-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedTowerType = type;
+        selectedPlacedTower = null;
+        updateHUD();
+      });
+    });
+
+    btnClearSelection.addEventListener('click', () => {
+      selectedTowerType = null;
+      selectedPlacedTower = null;
+      document.querySelectorAll('.tower-card').forEach(c => c.classList.remove('selected'));
+      updateHUD();
+    });
+
+    btnNextWave.addEventListener('click', () => {
+      if (waveInProgress) return;
+      startWave();
+    });
+
+    function startWave() {
+      waveInProgress = true;
+      btnNextWave.disabled = true;
+      btnNextWave.style.opacity = 0.5;
+
+      if (wave >= 10 && !demoniacoWorldActivated) {
+        demoniacoWorldActivated = true;
+        
+        let totalRefund = 0;
+        towers.forEach(t => {
+          totalRefund += t.totalInvested;
+        });
+        
+        gold += totalRefund;
+        towers = [];
+        selectedPlacedTower = null;
+        mapTransitionAlertTimer = 5.0;
+        
+        addFloatingText(canvas.width / 2, canvas.height / 2 - 40, `🔥 BEM-VINDO AO REINO DEMONÍACO!`, '#ff4500');
+        if (totalRefund > 0) {
+          addFloatingText(canvas.width / 2, canvas.height / 2 + 10, `+🪙${totalRefund} REEMBOLSO DAS TORRES!`, '#f6e05e');
+        }
+      }
+
+      let count = 5 + wave * 3;
+      enemySpawnQueue = [];
+
+      for (let i = 0; i < count; i++) {
+        let type = 'normal';
+        let rand = Math.random();
+
+        if (wave >= 3 && rand > 0.5) type = 'fast';
+        if (wave >= 4 && rand > 0.75) type = 'tank';
+        if (wave >= 10 && rand > 0.6) type = 'lava';
+
+        if ((wave === 5 || wave === 15 || (wave > 15 && wave % 5 === 0)) && i === count - 1) {
+          type = 'boss';
+          bossAlertTimer = 5.0;
+        }
+
+        enemySpawnQueue.push(type);
+      }
+    }
+
+    function drawMap() {
+      const tileSize = 32;
+      const demoniaco = wave >= 10;
+
+      // Fundo Base
+      for (let x = 0; x < canvas.width; x += tileSize) {
+        for (let y = 0; y < canvas.height; y += tileSize) {
+          if (demoniaco) {
+            ctx.fillStyle = ((x / tileSize + y / tileSize) % 2 === 0) ? '#1a202c' : '#2d3748';
+            ctx.fillRect(x, y, tileSize, tileSize);
+          } else {
+            ctx.fillStyle = ((x / tileSize + y / tileSize) % 2 === 0) ? '#2e8b57' : '#27794c';
+            ctx.fillRect(x, y, tileSize, tileSize);
+          }
+        }
+      }
+
+      // DESENHAR DECORAÇÕES ELEGANTES NO TERRENO
+      if (!demoniaco) {
+        farmDecorations.forEach(d => {
+          if (isOnPath(d.x, d.y)) return;
+          if (d.type === 'flower') {
+            ctx.fillStyle = d.color;
+            ctx.fillRect(d.x, d.y, 3, 3);
+            ctx.fillRect(d.x - 2, d.y, 2, 2);
+            ctx.fillRect(d.x + 3, d.y, 2, 2);
+            ctx.fillRect(d.x, d.y - 2, 2, 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(d.x + 1, d.y + 1, 1, 1);
+          } else {
+            ctx.fillStyle = '#1c5436';
+            ctx.beginPath();
+            ctx.arc(d.x, d.y, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#2f855a';
+            ctx.beginPath();
+            ctx.arc(d.x - 2, d.y - 2, 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      } else {
+        demonDecorations.forEach(d => {
+          if (isOnPath(d.x, d.y)) return;
+          if (d.type === 'crack') {
+            ctx.strokeStyle = '#ff4500';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(d.x, d.y);
+            ctx.lineTo(d.x + 6, d.y - 4);
+            ctx.lineTo(d.x + 10, d.y + 2);
+            ctx.stroke();
+          } else {
+            ctx.fillStyle = d.color;
+            ctx.beginPath();
+            ctx.moveTo(d.x, d.y - 6);
+            ctx.lineTo(d.x + 4, d.y + 2);
+            ctx.lineTo(d.x - 4, d.y + 2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(d.x - 1, d.y - 2, 2, 2);
+          }
+        });
+      }
+
+      let waypoints = getCurrentWaypoints();
+
+      // Borda decorativa externa do caminho
+      ctx.lineWidth = 50;
+      ctx.strokeStyle = demoniaco ? '#4a1515' : '#3d2817';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(waypoints[0].x, waypoints[0].y);
+      for (let i = 1; i < waypoints.length; i++) {
+        ctx.lineTo(waypoints[i].x, waypoints[i].y);
+      }
+      ctx.stroke();
+
+      // Sombra central do caminho
+      ctx.lineWidth = 44;
+      ctx.strokeStyle = demoniaco ? '#742a2a' : '#5c3d21';
+      ctx.beginPath();
+      ctx.moveTo(waypoints[0].x, waypoints[0].y);
+      for (let i = 1; i < waypoints.length; i++) {
+        ctx.lineTo(waypoints[i].x, waypoints[i].y);
+      }
+      ctx.stroke();
+
+      // Centro do Caminho Principal
+      ctx.lineWidth = 36;
+      ctx.strokeStyle = demoniaco ? '#ff4500' : '#8c6239';
+      ctx.beginPath();
+      ctx.moveTo(waypoints[0].x, waypoints[0].y);
+      for (let i = 1; i < waypoints.length; i++) {
+        ctx.lineTo(waypoints[i].x, waypoints[i].y);
+      }
+      ctx.stroke();
+
+      // Portais de Início e Fim Elegantes
+      ctx.fillStyle = demoniaco ? '#9b2c2c' : '#4a5568';
+      ctx.fillRect(waypoints[0].x - 12, waypoints[0].y - 12, 24, 24);
+      ctx.strokeStyle = '#ecc94b';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(waypoints[0].x - 12, waypoints[0].y - 12, 24, 24);
+
+      ctx.fillStyle = '#e53e3e';
+      let lastWp = waypoints[waypoints.length - 1];
+      ctx.fillRect(lastWp.x - 12, lastWp.y - 12, 24, 24);
+      ctx.strokeStyle = '#ffffff';
+      ctx.strokeRect(lastWp.x - 12, lastWp.y - 12, 24, 24);
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mousePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      mousePos = { x: -100, y: -100 };
+    });
+
+    canvas.addEventListener('click', () => {
+      if (mousePos.x < 0 || mousePos.y < 0) return;
+
+      let clickedTower = towers.find(t => Math.hypot(t.x - mousePos.x, t.y - mousePos.y) < 22);
+      if (clickedTower) {
+        selectedPlacedTower = clickedTower;
+        selectedTowerType = null;
+        document.querySelectorAll('.tower-card').forEach(c => c.classList.remove('selected'));
+        updateHUD();
+        return;
+      }
+
+      if (selectedTowerType) {
+        const config = TOWER_TYPES[selectedTowerType];
+        if (gold < config.cost) return;
+
+        if (selectedTowerType === 'heal') {
+          let currentHealTowers = towers.filter(t => t.type === 'heal').length;
+          if (currentHealTowers >= config.maxAllowed) return;
+        }
+
+        if (isOnPath(mousePos.x, mousePos.y) || isNearTower(mousePos.x, mousePos.y)) return;
+
+        gold -= config.cost;
+        let newTower = {
+          x: mousePos.x,
+          y: mousePos.y,
+          type: selectedTowerType,
+          range: config.range,
+          rate: config.rate,
+          damage: config.damage,
+          pushback: config.pushback || 0,
+          healAmount: config.healAmount || 0,
+          roundsToHeal: 2,
+          roundsProgress: 0,
+          totalInvested: config.cost,
+          level: 1,
+          upgradeCost: Math.round(config.cost * 0.8),
+          cooldown: 0,
+          color: config.color
+        };
+        towers.push(newTower);
+        selectedPlacedTower = newTower;
+        selectedTowerType = null;
+        document.querySelectorAll('.tower-card').forEach(c => c.classList.remove('selected'));
+        updateUI();
+        updateHUD();
+      }
+    });
+
+    function isOnPath(x, y) {
+      let waypoints = getCurrentWaypoints();
+      for (let i = 0; i < waypoints.length - 1; i++) {
+        let p1 = waypoints[i];
+        let p2 = waypoints[i+1];
+        let dist = distToSegment({x, y}, p1, p2);
+        if (dist < 32) return true;
+      }
+      return false;
+    }
+
+    function isNearTower(x, y) {
+      return towers.some(t => Math.hypot(t.x - x, t.y - y) < 40);
+    }
+
+    function distToSegment(p, v, w) {
+      let l2 = (v.x - w.x)**2 + (v.y - w.y)**2;
+      if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+      let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - w.y)) / l2;
+      t = Math.max(0, Math.min(1, t));
+      return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
+    }
+
+    function addFloatingText(x, y, text, color = '#f6e05e') {
+      floatingTexts.push({ x, y, text, color, alpha: 1.0 });
+    }
+
+    class RollingBarrel {
+      constructor(startWaypointIndex, startPos, damage, pushback) {
+        this.waypointIndex = startWaypointIndex;
+        this.x = startPos.x;
+        this.y = startPos.y;
+        this.damage = damage;
+        this.pushback = pushback;
+        this.speed = 3.5;
+        this.hitEnemies = new Set();
+      }
+
+      update(dt) {
+        let waypoints = getCurrentWaypoints();
+        let speed = this.speed * dt * 60;
+        let target = waypoints[this.waypointIndex];
+
+        if (!target) return false;
+
+        let dx = target.x - this.x;
+        let dy = target.y - this.y;
+        let dist = Math.hypot(dx, dy);
+
+        if (dist < speed) {
+          this.x = target.x;
+          this.y = target.y;
+          this.waypointIndex--;
+          if (this.waypointIndex < 0) return false;
+        } else {
+          this.x += (dx / dist) * speed;
+          this.y += (dy / dist) * speed;
+        }
+
+        enemies.forEach(e => {
+          if (Math.hypot(e.x - this.x, e.y - this.y) < 26 && !this.hitEnemies.has(e)) {
+            applyDamage(e, this.damage);
+            e.pushBack(this.pushback);
+            e.slowTimer = 1.0;
+            this.hitEnemies.add(e);
+          }
+        });
+
+        return true;
+      }
+
+      draw() {
+        ctx.fillStyle = '#8b5a2b';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#d69e2e';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+    }
+
+    class Enemy {
+      constructor(type) {
+        this.type = type;
+        let waypoints = getCurrentWaypoints();
+        this.x = waypoints[0].x;
+        this.y = waypoints[0].y;
+        this.waypointIndex = 0;
+        this.slowTimer = 0;
+
+        let hpMult = 1 + (wave - 1) * 0.35;
+        if (type === 'normal') { this.speed = 1.5; this.hp = 80 * hpMult; this.gold = 25; }
+        else if (type === 'fast') { this.speed = 2.5; this.hp = 50 * hpMult; this.gold = 25; }
+        else if (type === 'tank') { this.speed = 0.9; this.hp = 250 * hpMult; this.gold = 25; }
+        else if (type === 'lava') { this.speed = 1.2; this.hp = 450 * hpMult; this.gold = 50; }
+        else if (type === 'boss') { 
+          this.speed = 0.5; 
+          if (wave === 5) this.hp = 500;
+          else if (wave >= 15) this.hp = 1000;
+          else this.hp = 300 * hpMult; 
+          this.gold = 300; 
+        }
+
+        this.maxHp = this.hp;
+        this.sprite = pigSprites[type];
+      }
+
+      pushBack(distance) {
+        if (this.type === 'boss') distance *= 0.3;
+        let waypoints = getCurrentWaypoints();
+        let prevWaypoint = waypoints[Math.max(0, this.waypointIndex)];
+        let dx = prevWaypoint.x - this.x;
+        let dy = prevWaypoint.y - this.y;
+        let dist = Math.hypot(dx, dy);
+
+        if (dist > 0) {
+          this.x += (dx / dist) * distance;
+          this.y += (dy / dist) * distance;
+        }
+
+        if (dist < distance && this.waypointIndex > 0) {
+          this.waypointIndex--;
+        }
+      }
+
+      update(dt) {
+        let waypoints = getCurrentWaypoints();
+        if (this.slowTimer > 0) this.slowTimer -= dt;
+
+        let currentSpeed = (this.slowTimer > 0 ? this.speed * 0.5 : this.speed) * dt * 60;
+        let target = waypoints[this.waypointIndex + 1];
+
+        if (!target) return;
+
+        let dx = target.x - this.x;
+        let dy = target.y - this.y;
+        let dist = Math.hypot(dx, dy);
+
+        if (dist < currentSpeed) {
+          this.x = target.x;
+          this.y = target.y;
+          this.waypointIndex++;
+          if (this.waypointIndex >= waypoints.length - 1) {
+            if (this.type === 'normal') lives -= 1;
+            else if (this.type === 'fast') lives -= 2;
+            else if (this.type === 'tank') lives -= 5;
+            else if (this.type === 'lava') lives -= 8;
+            else if (this.type === 'boss') lives -= 20;
+
+            this.hp = 0;
+            updateUI();
+          }
+        } else {
+          this.x += (dx / dist) * currentSpeed;
+          this.y += (dy / dist) * currentSpeed;
+        }
+      }
+
+      draw() {
+        let size = this.sprite.width;
+        ctx.drawImage(this.sprite, this.x - size/2, this.y - size/2);
+
+        if (this.hp < this.maxHp) {
+          ctx.fillStyle = '#000';
+          ctx.fillRect(this.x - 15, this.y - size/2 - 8, 30, 5);
+          ctx.fillStyle = '#e53e3e';
+          ctx.fillRect(this.x - 14, this.y - size/2 - 7, 28 * (this.hp / this.maxHp), 3);
+        }
+      }
+    }
+
+    let lastTime = performance.now();
+
+    function gameLoop(now) {
+      let dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      if (!isPaused) {
+        dt *= gameSpeed;
+        updateGame(dt);
+      }
+
+      render(dt);
+      requestAnimationFrame(gameLoop);
+    }
+
+    function applyDamage(enemy, amount) {
+      enemy.hp -= amount;
+      if (enemy.hp <= 0 && !enemy.rewarded) {
+        enemy.rewarded = true;
+        gold += enemy.gold;
+        addFloatingText(enemy.x, enemy.y - 15, `+🪙${enemy.gold}`);
+        updateUI();
+      }
+    }
+
+    function updateGame(dt) {
+      if (bossAlertTimer > 0) bossAlertTimer -= dt;
+      if (mapTransitionAlertTimer > 0) mapTransitionAlertTimer -= dt;
+
+      if (enemySpawnQueue.length > 0) {
+        spawnTimer += dt;
+        if (spawnTimer >= 0.8) {
+          enemies.push(new Enemy(enemySpawnQueue.shift()));
+          spawnTimer = 0;
+        }
+      } else if (enemies.length === 0 && waveInProgress) {
+        waveInProgress = false;
+        gold += 50; 
+        addFloatingText(canvas.width / 2, canvas.height / 2, '+🪙50 BÔNUS DE FASE!', '#68d391');
+
+        towers.forEach(t => {
+          if (t.type === 'heal') {
+            t.roundsProgress++;
+            if (t.roundsProgress >= t.roundsToHeal) {
+              t.roundsProgress = 0;
+              lives += t.healAmount;
+              addFloatingText(t.x, t.y - 20, `+${t.healAmount} ❤️ HP!`, '#48bb78');
+              particles.push({ type: 'healPulse', x: t.x, y: t.y, radius: 10, life: 0.4 });
+            }
+          }
+        });
+
+        wave++;
+        btnNextWave.disabled = false;
+        btnNextWave.style.opacity = 1;
+        updateUI();
+
+        if (autoWaveEnabled) {
+          setTimeout(() => {
+            if (autoWaveEnabled && !waveInProgress) startWave();
+          }, 600);
+        }
+      }
+
+      enemies.forEach(e => e.update(dt));
+      enemies = enemies.filter(e => e.hp > 0);
+
+      rollingBarrels = rollingBarrels.filter(b => b.update(dt));
+
+      towers.forEach(t => {
+        if (t.type === 'heal') return;
+        t.cooldown -= dt;
+        if (t.cooldown <= 0) {
+          let targets = enemies.filter(e => Math.hypot(e.x - t.x, e.y - t.y) <= t.range);
+          if (targets.length > 0) {
+            t.cooldown = t.rate;
+
+            if (t.type === 'barrel') {
+              let targetPig = targets[0];
+              rollingBarrels.push(new RollingBarrel(targetPig.waypointIndex, { x: targetPig.x, y: targetPig.y }, t.damage, t.pushback));
+            } else if (t.type === 'tesla') {
+              applyDamage(targets[0], t.damage);
+              createLightningEffect(t.x, t.y, targets[0].x, targets[0].y);
+            } else {
+              projectiles.push({
+                x: t.x, y: t.y,
+                target: targets[0],
+                type: t.type,
+                damage: t.damage,
+                speed: 400,
+                color: t.color
+              });
+            }
+          }
+        }
+      });
+
+      projectiles.forEach(p => {
+        let dx = p.target.x - p.x;
+        let dy = p.target.y - p.y;
+        let dist = Math.hypot(dx, dy);
+        let moveDist = p.speed * dt;
+
+        if (dist <= moveDist) {
+          applyDamage(p.target, p.damage);
+          if (p.type === 'ice') p.target.slowTimer = 2.5;
+          if (p.type === 'cannon') {
+            enemies.forEach(e => {
+              if (Math.hypot(e.x - p.target.x, e.y - p.target.y) <= 50) {
+                applyDamage(e, p.damage * 0.5);
+              }
+            });
+          }
+          p.hit = true;
+        } else {
+          p.x += (dx / dist) * moveDist;
+          p.y += (dy / dist) * moveDist;
+        }
+      });
+      projectiles = projectiles.filter(p => !p.hit && p.target.hp > 0);
+
+      floatingTexts.forEach(ft => {
+        ft.y -= 20 * dt;
+        ft.alpha -= 0.8 * dt;
+      });
+      floatingTexts = floatingTexts.filter(ft => ft.alpha > 0);
+    }
+
+    function createLightningEffect(x1, y1, x2, y2) {
+      particles.push({ type: 'line', x1, y1, x2, y2, life: 0.15 });
+    }
+
+    function render(dt) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawMap();
+
+      towers.forEach(t => {
+        let sprite = towerSprites[t.type];
+        ctx.drawImage(sprite, t.x - 20, t.y - 20);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px "Courier New", monospace';
+        ctx.fillText(`Lv.${t.level}`, t.x - 14, t.y - 22);
+
+        if (t === selectedPlacedTower) {
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, t.range, 0, Math.PI * 2);
+          ctx.strokeStyle = '#ecc94b';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      });
+
+      enemies.forEach(e => e.draw());
+      rollingBarrels.forEach(b => b.draw());
+
+      projectiles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x - 4, p.y - 4, 8, 8);
+      });
+
+      particles.forEach((p) => {
+        if (p.type === 'line') {
+          ctx.strokeStyle = '#f6e05e';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(p.x1, p.y1);
+          ctx.lineTo(p.x2, p.y2);
+          ctx.stroke();
+          p.life -= 0.02;
+        } else if (p.type === 'healPulse') {
+          ctx.strokeStyle = 'rgba(72, 187, 120, ' + (p.life / 0.4) + ')';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.stroke();
+          p.radius += 100 * dt;
+          p.life -= dt;
+        }
+      });
+      particles = particles.filter(p => p.life > 0);
+
+      floatingTexts.forEach(ft => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, ft.alpha);
+        ctx.fillStyle = ft.color;
+        ctx.font = 'bold 14px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.restore();
+      });
+
+      let boss = enemies.find(e => e.type === 'boss');
+      if (boss) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(200, 10, 400, 30);
+        ctx.strokeStyle = '#ecc94b';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(200, 10, 400, 30);
+
+        ctx.fillStyle = '#e53e3e';
+        ctx.fillRect(204, 14, 392 * (boss.hp / boss.maxHp), 22);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 13px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`👑 PORCO REI (BOSS) - HP: ${Math.ceil(boss.hp)} / ${Math.ceil(boss.maxHp)}`, 400, 28);
+      }
+
+      if (bossAlertTimer > 0) {
+        ctx.fillStyle = 'rgba(229, 62, 62, 0.85)';
+        ctx.fillRect(120, 220, 560, 60);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(120, 220, 560, 60);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(wave === 15 ? '🚨 ALERTA: SUPREMO PORCO REI (1000 HP) APARECEU! 🚨' : '🚨 ALERTA: PORCO REI (500 HP) APARECEU! 🚨', 400, 256);
+      }
+
+      if (mapTransitionAlertTimer > 0) {
+        ctx.fillStyle = 'rgba(255, 69, 0, 0.9)';
+        ctx.fillRect(80, 140, 640, 70);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(80, 140, 640, 70);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('🔥 REINO DEMONÍACO ALCANÇADO! 🔥', 400, 168);
+        ctx.font = 'bold 12px "Courier New", monospace';
+        ctx.fillText('SUAS TORRES ANTERIORES FORAM VENDIDAS COM 100% DE REEMBOLSO!', 400, 192);
+      }
+
+      if (selectedTowerType && mousePos.x >= 0 && mousePos.y >= 0) {
+        const config = TOWER_TYPES[selectedTowerType];
+        
+        let exceedsHealLimit = false;
+        if (selectedTowerType === 'heal') {
+          let currentHealTowers = towers.filter(t => t.type === 'heal').length;
+          if (currentHealTowers >= config.maxAllowed) exceedsHealLimit = true;
+        }
+
+        const invalid = isOnPath(mousePos.x, mousePos.y) || isNearTower(mousePos.x, mousePos.y) || gold < config.cost || exceedsHealLimit;
+
+        ctx.beginPath();
+        ctx.arc(mousePos.x, mousePos.y, config.range, 0, Math.PI * 2);
+        ctx.fillStyle = invalid ? 'rgba(229, 62, 62, 0.15)' : 'rgba(72, 187, 120, 0.2)';
+        ctx.fill();
+        ctx.strokeStyle = invalid ? '#e53e3e' : '#48bb78';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.strokeStyle = invalid ? '#e53e3e' : '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(mousePos.x - 8, mousePos.y); ctx.lineTo(mousePos.x - 3, mousePos.y);
+        ctx.moveTo(mousePos.x + 3, mousePos.y); ctx.lineTo(mousePos.x + 8, mousePos.y);
+        ctx.moveTo(mousePos.x, mousePos.y - 8); ctx.lineTo(mousePos.x, mousePos.y - 3);
+        ctx.moveTo(mousePos.x, mousePos.y + 3); ctx.lineTo(mousePos.x, mousePos.y + 8);
+        ctx.stroke();
+
+        if (invalid) {
+          ctx.strokeStyle = '#e53e3e';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(mousePos.x - 10, mousePos.y - 10);
+          ctx.lineTo(mousePos.x + 10, mousePos.y + 10);
+          ctx.moveTo(mousePos.x + 10, mousePos.y - 10);
+          ctx.lineTo(mousePos.x - 10, mousePos.y + 10);
+          ctx.stroke();
+        }
+      }
+    }
+
+    function updateUI() {
+      goldEl.textContent = Math.floor(gold);
+      livesEl.textContent = lives;
+      waveEl.textContent = wave;
+
+      let healCount = towers.filter(t => t.type === 'heal').length;
+
+      document.querySelectorAll('.tower-card').forEach(card => {
+        const type = card.dataset.type;
+        const cost = TOWER_TYPES[type].cost;
+        let isLimitReached = (type === 'heal' && healCount >= TOWER_TYPES.heal.maxAllowed);
+
+        card.classList.toggle('disabled', gold < cost || isLimitReached);
+      });
+
+      if (lives <= 0) {
+        alert('Fim de Jogo! Os porquinhos invadiram a fazenda!');
+        document.location.reload();
+      }
+      updateHUD();
+    }
+
+    function updateHUD() {
+      if (!selectedPlacedTower) {
+        hudDetails.innerHTML = `Clique numa torre colocada no mapa para ver estatísticas, fazer upgrades ou vendê-la.`;
+        return;
+      }
+
+      let t = selectedPlacedTower;
+      let isMaxLevel = t.level >= 5;
+      let canUpgrade = gold >= t.upgradeCost && !isMaxLevel;
+      let sellValue = Math.round(t.totalInvested * 0.7);
+
+      hudDetails.innerHTML = `
+        <b>Tipo:</b> ${t.type.toUpperCase()}<br>
+        <b>Nível:</b> ${t.level} ${isMaxLevel ? '(MAX)' : ''}<br>
+        ${t.type === 'heal' ? `<b>Cura:</b> +${t.healAmount} HP / 2 Rodadas<br>` : `<b>Dano:</b> ${Math.round(t.damage)}<br>`}
+        ${t.pushback ? `<b>Empurrão:</b> ${t.pushback}px<br>` : ''}
+        <b>Alcance:</b> ${t.range}<br>
+        <button class="upgrade-btn" id="btnDoUpgrade" ${!canUpgrade ? 'disabled' : ''}>
+          ${isMaxLevel ? '⭐ Nível Máximo Atingido' : `📈 Upgrade Lv.${t.level + 1} (🪙 ${t.upgradeCost})`}
+        </button>
+        <button class="sell-btn" id="btnSellTower">
+          🗑️ Vender Torre (+🪙 ${sellValue})
+        </button>
+      `;
+
+      let btnUp = document.getElementById('btnDoUpgrade');
+      if (btnUp && !isMaxLevel) {
+        btnUp.onclick = () => {
+          if (gold >= t.upgradeCost && t.level < 5) {
+            gold -= t.upgradeCost;
+            t.totalInvested += t.upgradeCost;
+            if (t.type === 'heal') {
+              t.healAmount += 1;
+            } else {
+              t.damage *= 1.45;
+              if (t.pushback) t.pushback += 15;
+            }
+            t.range += 10;
+            t.level++;
+            t.upgradeCost = Math.round(t.upgradeCost * 1.6);
+            updateUI();
+          }
+        };
+      }
+
+      let btnSell = document.getElementById('btnSellTower');
+      if (btnSell) {
+        btnSell.onclick = () => {
+          gold += sellValue;
+          addFloatingText(t.x, t.y - 15, `+🪙${sellValue}`, '#dd6b20');
+          towers = towers.filter(item => item !== t);
+          selectedPlacedTower = null;
+          updateUI();
+        };
+      }
+    }
+
+    updateUI();
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>
